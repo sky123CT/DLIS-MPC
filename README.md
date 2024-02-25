@@ -1,20 +1,10 @@
-This framework is used for .
-
-There are two different ways this framework enables PyTorch models in a CasADi graph:
-
-**Naively**, where the operations of the PyTorch model are reconstructed in the CasADi graph and the learned weights are copied over. This is limited to dense multi-layer perceptrons and can be slow for large networks as CasADi is not optimized for large matrix multiplications.
-
-**Approximated**, where the PyTorch model is abstracted as first or second order approximation. The necessary parameters are passed to the CasADi function at every function call. This enables the use of any differentiable PyTorch module. Our paper describes how the approximation can be used to efficiently apply a learned dynamics model efficiently in an MPC setting.
-
-## Integration with Acados
-To use this framework with Acados :
-- Follow the [installation instructions](https://docs.acados.org/installation/index.html).
-- Install the [Python Interface](https://docs.acados.org/python_interface/index.html).
-- Ensure that `LD_LIBRARY_PATH` is set correctly (`DYLD_LIBRARY_PATH`on MacOS).
-
-An example of how a PyTorch model can be used as dynamics model in the Acados framework for Model Predictive Control can be found in `examples/mpc_mlp_cnn_example.py`.
-
-## Examples
+# DLIS-MPC
+## Structure
+### dlis: model training documents
+'''
+dlis/model_learning/train_casadi: configuration of the model structure and training.
+dlis/model_learning/test_casadi: testing of the model accuraccy.
+'''
 ### Approximated
 ```
 import ml_casadi.torch as mc
