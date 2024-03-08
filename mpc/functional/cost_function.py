@@ -29,11 +29,11 @@ class CSCostFunction(Callback):
         self.T_is = is_horizon
 
         # cost function parameters
-        self.W_is = 0 # intersection weight
+        self.W_is = 0.01  # intersection weight
         self.R = np.diag([0.001, 0.001])  # input cost matrix
         self.Rd = np.diag([0.01, 1.0])  # ([0.01, 1.0])  # input difference cost matrix
         self.Q = np.diag([1, 1, 0.00001, 0.001])
-        self.Qf = np.diag([100, 100, 0.01, 0.1])
+        self.Qf = np.diag([10, 10, 0.01, 0.1])
         # self.Q = np.diag([1.0, 1.0, 0.001, 0.1])
         # self.Qf = np.diag([100.0, 100.0, 0.01, 1])  # state final matrix
         self.GOAL_DIS = 1.1  # goal distance
@@ -46,7 +46,7 @@ class CSCostFunction(Callback):
         self.acceleration_cost_sym, self.acceleration_cost_function = self.__define_acceleration_cost()
         self.stage_cost_sym, self.stage_cost_function = self.__define_stage_cost()
         self.terminal_cost_sym, self.terminal_cost_function = self.__define_terminal_cost()
-        # self.intersection_cost_sym, self.intersection_cost_function = self.__define_intersection_cost()
+        self.intersection_cost_sym, self.intersection_cost_function = self.__define_intersection_cost()
         """
         self.cost_sym = (self.velocity_cost_sym +
                          self.acceleration_cost_sym +
@@ -96,33 +96,39 @@ class CSCostFunction(Callback):
 
     def __define_intersection_cost(self):
         intersection_cost = 0
-        if self.obstacle.shape == "polygon":
-            for t in range(self.T - self.T_is):
-                last_expanded_vertices, last_expand_rate, obstacle_init_radius, i_vertices = (
-                    self.obstacle.expand_polygon_as_circle(self.x_sym[:, t + self.T_is - 1]))
-                new_expand_rate = (1 - self.obstacle.lam) * (last_expand_rate - 1) + 1
-                new_expand_vertices = (mtimes(new_expand_rate, (self.obstacle.vertices - self.obstacle.center_point)) +
-                                       repmat(self.obstacle.center_point, 1, 4).T)
-                relative_position_sym = new_expand_vertices.reshape((-1, 1)) - repmat(self.x_sym[:2, t], 4, 1)
-                input_sym = vertcat(relative_position_sym, self.x_sym[-2:, t])
-                is_area = self.DLIS.model(input_sym)
-                intersection_cost += is_area
-        elif self.obstacle.shape == "circle":
-            for t in range(self.T - self.T_is):
-                last_expanded_radius = (
-                    self.obstacle.cbf_calculate_obstacle_expansion(robot_position=self.x_sym[:2, t + self.T_is - 1]))
-                new_expanded_radius = ((1 - self.obstacle.lam) * (last_expanded_radius - self.obstacle.radius) +
-                                       self.obstacle.radius)
-                relative_position_sym = self.obstacle.center_point - self.x_sym[:2, t]
-                input_sym = vertcat(relative_position_sym,
-                                    new_expanded_radius**2,
-                                    self.x_sym[-1, t],
-                                    self.x_sym[-2, t]
-                                    )
-                is_area = self.DLIS.model(input_sym) * self.W_is
-                intersection_cost += is_area
-        else:
-            raise ValueError("Obstacle shape not given or not fit!")
+        for i in range(len(self.obstacle.obstacle_list)):
+            if self.obstacle.obstacle_list[i]["shape"] == "polygon":
+                pass
+                """
+                for t in range(self.T - self.T_is):
+                    last_expanded_vertices, last_expand_rate, obstacle_init_radius, i_vertices = (
+                        self.obstacle.expand_polygon_as_circle(self.x_sym[:, t + self.T_is - 1]))
+                    new_expand_rate = (1 - self.obstacle.lam) * (last_expand_rate - 1) + 1
+                    new_expand_vertices = (mtimes(new_expand_rate, (self.obstacle.vertices - self.obstacle.center_point)) +
+                                        repmat(self.obstacle.center_point, 1, 4).T)
+                    relative_position_sym = new_expand_vertices.reshape((-1, 1)) - repmat(self.x_sym[:2, t], 4, 1)
+                    input_sym = vertcat(relative_position_sym, self.x_sym[-2:, t])
+                    is_area = self.DLIS.model(input_sym)
+                    intersection_cost += is_area
+                """
+            elif self.obstacle.obstacle_list[i]["shape"] == "circle":
+                for t in range(self.T - self.T_is):
+                    last_expanded_radius = (
+                        self.obstacle.cbf_calculate_obstacle_expansion(robot_position=self.x_sym[:2, t + self.T_is - 1])[i]
+                    )
+                    new_expanded_radius = ((1 - self.obstacle.lam) *
+                                           (last_expanded_radius - self.obstacle.obstacle_list[i]["radius"]) +
+                                           self.obstacle.obstacle_list[i]["radius"])
+                    relative_position_sym = self.obstacle.obstacle_list[i]["center"] - self.x_sym[:2, t]
+                    input_sym = vertcat(relative_position_sym,
+                                        new_expanded_radius**2,
+                                        self.x_sym[-1, t],
+                                        self.x_sym[-2, t]
+                                        )
+                    is_area = self.DLIS.model(input_sym) * self.W_is
+                    intersection_cost += is_area
+            else:
+                raise ValueError("Obstacle shape not given or not fit!")
         intersection_cost_function = Function('intersection_cost', [self.x_sym], [intersection_cost])
         return intersection_cost, intersection_cost_function
 

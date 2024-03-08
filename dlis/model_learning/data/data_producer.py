@@ -171,7 +171,7 @@ class RandUP:
             sampling_reach_points.append(ys_random)
 
             # plot
-            """
+
             RandUP.plot_sets(vehicle,
                              randup_process,
                              reachable_sets,
@@ -179,7 +179,7 @@ class RandUP:
                              intersection_sets,
                              sampling_reach_points,
                              index=i_x)
-            """
+
         return reachable_sets, obstacles, intersection_sets, sampling_reach_points, as_circle
 
     @staticmethod
@@ -192,17 +192,20 @@ class RandUP:
             sampling_points = sampling_reach_points[index]
 
             # sub-figure configuration
-            fig, axes = plt.subplots(2, 1, figsize=[8, 16])
+            fig, axes = plt.subplots(3, 1, figsize=[8, 16])
             ax1 = axes[0]
             ax1.axis('equal')
             ax2 = axes[1]
             ax2.axis('equal')
+            ax3 = axes[2]
+            ax3.axis('equal')
 
             ax1.scatter(sampling_points[:, 0], sampling_points[:, 1], color='b')
             ax1.plot(ox, oy, color='r')
 
             ax1.plot(reachable_bound[:, 0], reachable_bound[:, 1], 'g')
             ax2.plot(reachable_bound[:, 0], reachable_bound[:, 1], 'g')
+            ax3.plot(reachable_bound[:, 0], reachable_bound[:, 1], 'g')
             # ax2.plot(intersection_bound[:, 0], intersection_bound[:, 1], 'g')
 
             vehicle.plot_car(randup_process.x[index, 0], randup_process.x[index, 1], randup_process.x[index, 3],
@@ -226,17 +229,20 @@ class RandUP:
                 sampling_points = sampling_reach_points[i]
 
                 # sub-figure configuration
-                fig, axes = plt.subplots(2, 1, figsize=[8, 16])
+                fig, axes = plt.subplots(3, 1, figsize=[8, 16])
                 ax1 = axes[0]
                 ax1.axis('equal')
                 ax2 = axes[1]
                 ax2.axis('equal')
+                ax3 = axes[2]
+                ax3.axis('equal')
 
                 ax1.scatter(sampling_points[:, 0], sampling_points[:, 1], color='b')
                 ax1.fill(ox, oy, color='red')
 
                 ax1.plot(reachable_bound[:, 0], reachable_bound[:, 1], 'g')
                 ax2.plot(reachable_bound[:, 0], reachable_bound[:, 1], 'g')
+                ax3.plot(reachable_bound[:, 0], reachable_bound[:, 1], 'g')
                 # ax2.plot(intersection_bound[:, 0], intersection_bound[:, 1], 'g')
 
                 vehicle.plot_car(randup_process.x[i, 0], randup_process.x[i, 1], randup_process.x[i, 3],

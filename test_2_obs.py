@@ -102,10 +102,11 @@ def main():
         tyt_list.append(car.state.y + np.sin(car.state.yawt) * car.ROD_LEN)
 
 
-        plt.cla()
+        plt.clf()
         # for stopping simulation with the esc key.
         plt.gcf().canvas.mpl_connect('key_release_event',
                                      lambda event: [exit(0) if event.key == 'escape' else None])
+        plt.subplot(211)
         if x1_opt is not None:
             plt.plot(x1_opt, x2_opt, "xr", label="MPC")
         plt.plot(cx, cy, "-r", label="course")
@@ -133,9 +134,10 @@ def main():
 
         for i in range(len(obstacle.obstacle_list)):
             if obstacle.obstacle_list[i]["shape"] == "polygon":
-                obstacle_x = np.concatenate((obstacle.vertices[:, 0], obstacle.vertices[0, 0]))
-                obstacle_y = np.concatenate((obstacle.vertices[:, 1], obstacle.vertices[0, 1]))
-                plt.plot(obstacle_x, obstacle_y)
+                #obstacle_x = np.concatenate((obstacle.vertices[:, 0], obstacle.vertices[0, 0]))
+                #obstacle_y = np.concatenate((obstacle.vertices[:, 1], obstacle.vertices[0, 1]))
+                #plt.plot(obstacle_x, obstacle_y)
+                pass
             # plt.plot(txm, tym, "-y", label="tracking")
             elif obstacle.obstacle_list[i]["shape"] == "circle":
                 theta = np.linspace(0, 2 * np.pi, 100)
@@ -144,6 +146,41 @@ def main():
                 plt.plot(circle_x, circle_y)
 
         plt.axis("equal")
+        plt.grid(True)
+
+        # plot reachable set and expanded obstacle
+        plt.subplot(212)
+        reachable_set_approx = [[car.state.x, car.state.y],
+                                [car.state.x-0.075*0.85*np.cos(car.state.yawt)+0.0025*np.cos(car.state.yawt+pi/2),
+                                 car.state.y-0.075*0.85*np.sin(car.state.yawt)+0.0025*np.sin(car.state.yawt+pi/2)],
+                                [car.state.x-0.075*np.cos(car.state.yawt),
+                                 car.state.y-0.075*np.sin(car.state.yawt)],
+                                [car.state.x-0.075*0.85*np.cos(car.state.yawt)+0.0025*np.cos(car.state.yawt-pi/2),
+                                 car.state.y-0.075*0.85*np.sin(car.state.yawt)+0.0025*np.sin(car.state.yawt-pi/2)],
+                                [car.state.x, car.state.y]]
+        reachable_x = []
+        reachable_y = []
+        for i in range(len(reachable_set_approx)):
+            reachable_x.append(reachable_set_approx[i][0])
+            reachable_y.append(reachable_set_approx[i][1])
+        plt.plot(reachable_x, reachable_y, color='g')
+
+        expanded_radius = obstacle.cbf_calculate_obstacle_expansion(robot_position=np.array([car.state.x, car.state.y]))
+        for i in range(len(obstacle.obstacle_list)):
+            if obstacle.obstacle_list[i]["shape"] == "polygon":
+                #obstacle_x = np.concatenate((obstacle.vertices[:, 0], obstacle.vertices[0, 0]))
+                #obstacle_y = np.concatenate((obstacle.vertices[:, 1], obstacle.vertices[0, 1]))
+                #plt.plot(obstacle_x, obstacle_y)
+                pass
+            # plt.plot(txm, tym, "-y", label="tracking")
+            elif obstacle.obstacle_list[i]["shape"] == "circle":
+                theta = np.linspace(0, 2 * np.pi, 100)
+                circle_x = obstacle.obstacle_list[i]["center"][0]+expanded_radius[i]*np.cos(theta)*((1-obstacle.lam)*1.01)
+                circle_y = obstacle.obstacle_list[i]["center"][1]+expanded_radius[i]*np.sin(theta)*((1-obstacle.lam)*1.01)
+                plt.plot(circle_x, circle_y)
+
+        plt.xlim((car.state.x-0.1, car.state.x+0.1))
+        plt.ylim((car.state.y-0.1, car.state.y+0.1))
         plt.grid(True)
 
         plt.pause(0.0001)

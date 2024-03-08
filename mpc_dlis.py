@@ -22,7 +22,7 @@ T_is = 5
 
 def main():
     car = Car()
-    obstacle = Obstacle(shape="circle")
+    obstacle = Obstacle(num=1, shape=["circle"], center_list=[[-3.5, 2.5]], radius_list=[[1.0]])
     dynamics = Dynamics(car=car,
                         nx=NX,
                         nu=NU,
@@ -123,16 +123,18 @@ def main():
         txt_list.append(car.state.x + np.cos(car.state.yawt) * car.ROD_LEN)
         tyt_list.append(car.state.y + np.sin(car.state.yawt) * car.ROD_LEN)
 
-        if obstacle.shape == "polygon":
-            obstacle_x = np.concatenate((obstacle.vertices[:, 0], obstacle.vertices[0, 0]))
-            obstacle_y = np.concatenate((obstacle.vertices[:, 1], obstacle.vertices[0, 1]))
-            plt.plot(obstacle_x, obstacle_y)
-        # plt.plot(txm, tym, "-y", label="tracking")
-        elif obstacle.shape == "circle":
-            theta = np.linspace(0, 2 * np.pi, 100)
-            circle_x = obstacle.center_point[0] + obstacle.radius * np.cos(theta)
-            circle_y = obstacle.center_point[1] + obstacle.radius * np.sin(theta)
-            plt.plot(circle_x, circle_y)
+        for i in range(len(obstacle.obstacle_list)):
+            if obstacle.obstacle_list[i]["shape"] == "polygon":
+                # obstacle_x = np.concatenate((obstacle.vertices[:, 0], obstacle.vertices[0, 0]))
+                # obstacle_y = np.concatenate((obstacle.vertices[:, 1], obstacle.vertices[0, 1]))
+                # plt.plot(obstacle_x, obstacle_y)
+                pass
+            # plt.plot(txm, tym, "-y", label="tracking")
+            elif obstacle.obstacle_list[i]["shape"] == "circle":
+                theta = np.linspace(0, 2 * np.pi, 100)
+                circle_x = obstacle.obstacle_list[i]["center"][0] + obstacle.obstacle_list[i]["radius"] * np.cos(theta)
+                circle_y = obstacle.obstacle_list[i]["center"][1] + obstacle.obstacle_list[i]["radius"] * np.sin(theta)
+                plt.plot(circle_x, circle_y)
 
         plt.axis("equal")
         plt.grid(True)
