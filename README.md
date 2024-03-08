@@ -14,5 +14,5 @@ mpc_dlis.py
 ```
 ### Experiments with further obstacles setting
 ```
-test_2_obstacle 
+test_2_obstacle.py
 ```
