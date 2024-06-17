@@ -301,9 +301,9 @@ class RandUP:
 
 def main():
     argv = sys.argv
-    sample_num = 4800 #int(argv[1])
-    point_num = 1000 #int(argv[2])
-    scale = 0.05 #int(argv[3])
+    sample_num = int(argv[1])
+    point_num = int(argv[2])
+    scale = int(argv[3])
 
     car = Car(trailer_num=3)
     dynamics = Dynamics(car=car, nx=5, nu=2, dt=0.1)
