@@ -4,7 +4,7 @@ import numpy as np
 from model import CSDLIS_DF_RE, CSDLIS_MLP, DP
 
 
-def training(model, inputs, labels, epoch_range=1000, batch_size=16, learning_rate=0.0002):
+def training(model, inputs, labels, epoch_range=4000, batch_size=32, learning_rate=0.00005):
     loss = nn.MSELoss(reduction='mean')
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
@@ -28,16 +28,20 @@ def training(model, inputs, labels, epoch_range=1000, batch_size=16, learning_ra
             print(epoch, costs[int(epoch / 100)])
             print(batch_costs[0])
 
-    torch.save(model.state_dict(), './model_casadi.pkl')
+    torch.save(model.state_dict(), './model_casadi_2trailer_new5.pkl')
 
 
 def main():
     torch.cuda.set_device(0)
-    model = CSDLIS_MLP(mlp_i_dim=5, mlp_h_num=2, mlp_h_dim=64, mlp_act=['ReLU', 'ReLU', 'ReLU', 'ReLU']).cuda(0)
+    model = CSDLIS_MLP(mlp_i_dim=9,
+                       mlp_h_num=2,
+                       mlp_h_dim=128,
+                       mlp_o_dim=2,
+                       mlp_act=['ReLU', 'ReLU', 'ReLU', 'ReLU']).cuda(0)
     # model = CSDLIS_DF_RE(df_i_dim=2).cuda(0)
 
-    training_set_path = './data/dataset/train_circle_4800.xlsx'
-    train_input, train_label = DP.data_processing(data_path=training_set_path, obstacle_shape='circle')
+    training_set_path = './data/dataset/sample_2trailers_4800samples_with_tractor_1000points_scale_0.05.xlsx'
+    train_input, train_label = DP.data_processing_2trailer(data_path=training_set_path)
     training(model, train_input, train_label)
 
 

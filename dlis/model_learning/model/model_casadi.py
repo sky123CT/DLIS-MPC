@@ -146,3 +146,59 @@ class DLISCasadiMLP(TorchMLCasadiModule):
             x = layer(x)
         output = x
         return output
+
+
+class DLISCasadiMLP2Trailers(TorchMLCasadiModule):
+    def __init__(self, mlp_i_dim=9,
+                 mlp_h_num=2,
+                 mlp_h_dim=64,
+                 mlp_o_dim=2,
+                 mlp_act=None):
+        super().__init__()
+
+        # Definition of mlp Layers
+        self.mlp_input_dim = mlp_i_dim
+        self.mlp_hidden_num = mlp_h_num
+        self.mlp_hidden_dim = mlp_h_dim
+        self.mlp_output_dim = mlp_o_dim
+        self.mlp_activation = mlp_act
+
+        self.input_size = self.mlp_input_dim
+        self.output_size = self.mlp_output_dim
+
+        # MLP Layer Definition
+        if type(self.mlp_activation) is list:
+            if len(self.mlp_activation) == self.mlp_hidden_num+2:
+                self.mlp_activation_layer = []
+                for i in range(len(self.mlp_activation)):
+                    if self.mlp_activation[i] == 'Pass':
+                        self.mlp_activation_layer.append(lambda x: x)
+                    else:
+                        self.mlp_activation_layer.append(getattr(casadi_nn.activation, self.mlp_activation[i])())
+            else:
+                raise ValueError("Activation layer number can not fit Linear layer number!")
+        else:
+            raise ValueError("please give proper activation layer list!")
+
+        self.mlp_layer = []
+        self.mlp_layer.append(casadi_nn.Linear(self.mlp_input_dim, self.mlp_hidden_dim))
+        self.mlp_layer.append(self.mlp_activation_layer[0])
+        for i in range(self.mlp_hidden_num):
+            self.mlp_layer.append(casadi_nn.Linear(self.mlp_hidden_dim, self.mlp_hidden_dim))
+            self.mlp_layer.append(self.mlp_activation_layer[i+1])
+        self.mlp_layer.append(casadi_nn.Linear(self.mlp_hidden_dim, self.mlp_output_dim))
+        self.mlp_layer.append(self.mlp_activation_layer[-1])
+
+        self.mlp_layers = torch.nn.ModuleList(self.mlp_layer)
+
+    def forward_mlp(self, x):
+        for layer in self.mlp_layers:
+            x = layer(x)
+        out = x
+        return out
+
+    def forward(self, x):
+        for layer in self.mlp_layers:
+            x = layer(x)
+        output = x
+        return output

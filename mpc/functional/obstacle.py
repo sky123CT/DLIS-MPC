@@ -5,11 +5,12 @@ from ..utility.utility import *
 
 class Obstacle:
     def __init__(self,
-                 num=1,
-                 shape=["polygon"],
-                 center_list=[[-3.5, 2.5]],
-                 radius_list=[[1.0]],
-                 vertices_list=[[[0.5, 0], [0, 0.5], [-0.5, 0], [0, -0.5]]],
+                 num,
+                 shape,
+                 center_list,
+                 radius_list=0,
+                 vertices_list=0,
+                 shrinking_par = 0.05,
                  if_cbf=True):
         self.obs_num = num
         self.obstacle_list = []
@@ -25,7 +26,7 @@ class Obstacle:
                 raise ValueError("Obstacle shape not given or not fit!")
 
         if if_cbf is True:
-            self.lam = 0.05
+            self.lam = shrinking_par
             self.circle_robot_limit = 55
 
     def expand_polygon_as_circle(self, state_sym):
@@ -58,3 +59,12 @@ class Obstacle:
         return ((robot_position[0]*(segment[1, 1]-segment[0, 1])-robot_position[1]*(segment[1, 0]-segment[0, 0]))
                 / (segment[0, 0]*segment[1, 1]-segment[0, 1]*segment[1, 0]))
 
+    @staticmethod
+    def cbf_deactivate(obstacle_center, robot_center, robot_orientation):
+        relative_position = obstacle_center - robot_center
+        relative_position_cos = relative_position[0] / np.linalg.norm(relative_position)
+        if relative_position[1] >= 0:
+            relative_angle = np.arccos(relative_position_cos) - robot_orientation
+        else:
+            relative_angle = np.arccos(relative_position_cos) + robot_orientation
+        return -np.pi/2 <= relative_angle <= np.pi/2

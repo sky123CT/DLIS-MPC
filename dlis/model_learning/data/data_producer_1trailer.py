@@ -55,7 +55,7 @@ class Vehicle:
 
 
 class RandUP:
-    def __init__(self):
+    def __init__(self, state, real_time=False):
         # Define constants
         self.v_limit = 0.2
         self.ang_limit = 30.0
@@ -80,10 +80,16 @@ class RandUP:
             self.U_max_random = np.concatenate((self.U_max_random, self.U_max), axis=None)
 
         # set parameters for RandUP
-        self.M = 4800
-        self.angle = np.array([np.random.uniform(low=-np.deg2rad(45), high=np.deg2rad(45), size=self.M)])
-        self.x = np.zeros((self.M, 3))
-        self.x = np.concatenate((self.x, self.angle.T), axis=1)
+
+        if real_time:
+            self.M = 1000
+            self.x = np.array([[state[0], state[1], state[2], state[3]]])
+        else:
+            self.M = 4800
+            self.angle = np.array([np.random.uniform(low=-np.deg2rad(45), high=np.deg2rad(45), size=self.M)])
+            self.x = np.zeros((self.M, 3))
+            self.x = np.concatenate((self.x, self.angle.T), axis=1)
+
 
     @staticmethod
     def model_predictor(randup_process, vehicle, x, u):
@@ -103,7 +109,7 @@ class RandUP:
         intersection_sets = []
         sampling_reach_points = []
         for i_x in range(len(randup_process.x)):
-            print(i_x)
+            # print(i_x)
             #randup_process.x[0] = [0, 0, 0, np.deg2rad(0)]
             # x[1] = [0, 0, 0, np.deg2rad(30)]
             # x[2] = [0, 0, 0, np.deg2rad(-45)]
@@ -155,7 +161,7 @@ class RandUP:
             if as_circle:
                 radius = np.linalg.norm(randup_process.x[i_x, :2]-obstacle_center)
                 obstacle = Point(obstacle_center).buffer(
-                    distance=np.random.normal(loc=radius, scale=0.1),
+                    distance=np.absolute(np.random.normal(loc=radius, scale=0.5)),
                     resolution=100)
             else:
                 obstacle_vertices = (np.array([[0.5, 0], [0, 0.5], [-0.5, 0], [0, -0.5]]) *
@@ -171,7 +177,7 @@ class RandUP:
             sampling_reach_points.append(ys_random)
 
             # plot
-
+            """
             RandUP.plot_sets(vehicle,
                              randup_process,
                              reachable_sets,
@@ -179,6 +185,8 @@ class RandUP:
                              intersection_sets,
                              sampling_reach_points,
                              index=i_x)
+            """
+
 
         return reachable_sets, obstacles, intersection_sets, sampling_reach_points, as_circle
 
@@ -200,7 +208,7 @@ class RandUP:
             ax3 = axes[2]
             ax3.axis('equal')
 
-            ax1.scatter(sampling_points[:, 0], sampling_points[:, 1], color='b')
+            ax3.scatter(sampling_points[:, 0], sampling_points[:, 1], color='b')
             ax1.plot(ox, oy, color='r')
 
             ax1.plot(reachable_bound[:, 0], reachable_bound[:, 1], 'g')
@@ -237,7 +245,7 @@ class RandUP:
                 ax3 = axes[2]
                 ax3.axis('equal')
 
-                ax1.scatter(sampling_points[:, 0], sampling_points[:, 1], color='b')
+                ax3.scatter(sampling_points[:, 0], sampling_points[:, 1], color='b')
                 ax1.fill(ox, oy, color='red')
 
                 ax1.plot(reachable_bound[:, 0], reachable_bound[:, 1], 'g')
@@ -312,7 +320,7 @@ def output_excel(initial_states, obstacles, intersection_sets, as_circle=False):
 
 
 def main():
-    randup_process = RandUP()
+    randup_process = RandUP(state=None)
     vehicle = Vehicle()
     # method_num: 0 -> Convex_hull; 1 -> Concave_hull with alphashape
     polygon_operator = PolygonOperator(method_num=1, alpha=3)

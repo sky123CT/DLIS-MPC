@@ -22,7 +22,7 @@ T_is = 5
 
 def main():
     car = Car()
-    obstacle = Obstacle(num=1, shape=["circle"], center_list=[[-3.5, 2.5]], radius_list=[[1.0]])
+    obstacle = Obstacle(num=1, shape=["circle"], center_list=[[-3.0, 4.5]], radius_list=[[1]])
     dynamics = Dynamics(car=car,
                         nx=NX,
                         nu=NU,
@@ -69,7 +69,8 @@ def main():
                       nu=NU,
                       dt=DT,
                       horizon=T,
-                      horizon_is=T_is)
+                      horizon_is=T_is,
+                      cbf_slack_activate=True)
         x1_opt, x2_opt, x3_opt, x4_opt, u1_opt, u2_opt = new_mpc.one_iter_mpc_control()
         del new_mpc
         # print(x1_opt, x2_opt, x3_opt, x4_opt, u1_opt, u2_opt)
@@ -94,10 +95,11 @@ def main():
         tyt_list.append(car.state.y + np.sin(car.state.yawt) * car.ROD_LEN)
 
 
-        plt.cla()
+        plt.clf()
         # for stopping simulation with the esc key.
         plt.gcf().canvas.mpl_connect('key_release_event',
                                      lambda event: [exit(0) if event.key == 'escape' else None])
+        plt.subplot(211)
         if x1_opt is not None:
             plt.plot(x1_opt, x2_opt, "xr", label="MPC")
         plt.plot(cx, cy, "-r", label="course")
@@ -108,9 +110,9 @@ def main():
         car.plot_car(car.state.x, car.state.y, car.state.yawt, car.LENGTH_T)
 
         # for tractor
-        car.plot_car(car.state.x + np.cos(car.state.yawt) * car.ROD_LEN + np.cos(car.state.yaw) * car.CP_OFFSET, 
-                     car.state.y + np.sin(car.state.yawt) * car.ROD_LEN + np.sin(car.state.yaw) * car.CP_OFFSET, 
-                     car.state.yaw, 
+        car.plot_car(car.state.x + np.cos(car.state.yawt) * car.ROD_LEN + np.cos(car.state.yaw) * car.CP_OFFSET,
+                     car.state.y + np.sin(car.state.yawt) * car.ROD_LEN + np.sin(car.state.yaw) * car.CP_OFFSET,
+                     car.state.yaw,
                      car.LENGTH)
         plt.plot([car.state.x, car.state.x + np.cos(car.state.yawt) * car.ROD_LEN],
                  [car.state.y, car.state.y + np.sin(car.state.yawt) * car.ROD_LEN],
@@ -118,7 +120,7 @@ def main():
         plt.plot([car.state.x + np.cos(car.state.yawt) * car.ROD_LEN,
                   car.state.x + np.cos(car.state.yawt) * car.ROD_LEN + np.cos(car.state.yaw) * car.CP_OFFSET],
                  [car.state.y + np.sin(car.state.yawt) * car.ROD_LEN,
-                  car.state.y + np.sin(car.state.yawt) * car.ROD_LEN + np.sin(car.state.yaw) * car.CP_OFFSET], 
+                  car.state.y + np.sin(car.state.yawt) * car.ROD_LEN + np.sin(car.state.yaw) * car.CP_OFFSET],
                  color='black', linewidth=2, linestyle='--')
         txt_list.append(car.state.x + np.cos(car.state.yawt) * car.ROD_LEN)
         tyt_list.append(car.state.y + np.sin(car.state.yawt) * car.ROD_LEN)
@@ -137,6 +139,49 @@ def main():
                 plt.plot(circle_x, circle_y)
 
         plt.axis("equal")
+        plt.grid(True)
+
+        # plot reachable set and expanded obstacle
+        plt.subplot(212)
+        reachable_set_approx = [[car.state.x, car.state.y],
+                                [car.state.x - 0.075 * 0.85 * np.cos(car.state.yawt) + 0.0025 * np.cos(
+                                    car.state.yawt + pi / 2),
+                                 car.state.y - 0.075 * 0.85 * np.sin(car.state.yawt) + 0.0025 * np.sin(
+                                     car.state.yawt + pi / 2)],
+                                [car.state.x - 0.075 * np.cos(car.state.yawt),
+                                 car.state.y - 0.075 * np.sin(car.state.yawt)],
+                                [car.state.x - 0.075 * 0.85 * np.cos(car.state.yawt) + 0.0025 * np.cos(
+                                    car.state.yawt - pi / 2),
+                                 car.state.y - 0.075 * 0.85 * np.sin(car.state.yawt) + 0.0025 * np.sin(
+                                     car.state.yawt - pi / 2)],
+                                [car.state.x, car.state.y]]
+        reachable_x = []
+        reachable_y = []
+        for i in range(len(reachable_set_approx)):
+            reachable_x.append(reachable_set_approx[i][0])
+            reachable_y.append(reachable_set_approx[i][1])
+        plt.plot(reachable_x, reachable_y, color='g')
+
+        expanded_radius = obstacle.cbf_calculate_obstacle_expansion(robot_position=np.array([car.state.x, car.state.y]))
+        for i in range(len(obstacle.obstacle_list)):
+            if obstacle.obstacle_list[i]["shape"] == "polygon":
+                # obstacle_x = np.concatenate((obstacle.vertices[:, 0], obstacle.vertices[0, 0]))
+                # obstacle_y = np.concatenate((obstacle.vertices[:, 1], obstacle.vertices[0, 1]))
+                # plt.plot(obstacle_x, obstacle_y)
+                pass
+            # plt.plot(txm, tym, "-y", label="tracking")
+            elif obstacle.obstacle_list[i]["shape"] == "circle":
+                theta = np.linspace(0, 2 * np.pi, 100)
+                circle_x = (obstacle.obstacle_list[i]["center"][0] + obstacle.obstacle_list[i]["radius"] * np.cos(theta)
+                            + (expanded_radius[i]-obstacle.obstacle_list[i]["radius"]) * np.cos(theta) * (
+                            (1 - obstacle.lam) ** 4))
+                circle_y = (obstacle.obstacle_list[i]["center"][1] + obstacle.obstacle_list[i]["radius"] * np.sin(theta)
+                            + (expanded_radius[i]-obstacle.obstacle_list[i]["radius"]) * np.sin(theta) * (
+                            (1 - obstacle.lam) ** 4))
+                plt.plot(circle_x, circle_y)
+
+        plt.xlim((car.state.x - 0.1, car.state.x + 0.1))
+        plt.ylim((car.state.y - 0.1, car.state.y + 0.1))
         plt.grid(True)
 
         plt.pause(0.0001)

@@ -18,6 +18,7 @@ import time
 from sympy import *
 from casadi import *
 from mpc.path_planning import cubic_spline_planner as PathPlanner
+from mpc.utility.utility import *
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
                 ".utility/path_planning/")
@@ -28,7 +29,7 @@ NU = 2  # u = [v, w]
 T = 10  # horizon length 5
 
 # control barrier function parameters
-lam = 0.05  # barrier function param
+lam = 0.03  # barrier function param
 r_f = 100  # reachable set param
 circle_robot_limit = 55  # determine if the robot is tangent to a circle
 T_CAL = []
@@ -70,7 +71,7 @@ CP_OFFSET = 0.0  # [m]
 
 # Obstacle parameter
 O_X = [-3.5]  # [-3]# , -4.5] # -2
-O_Y = [2.5]  # [4.2]# , -2.2] # 0.1
+O_Y = [-0.25]  # [4.2]# , -2.2] # 0.1
 O_R = [1.0]  # , 0.5] # 0.5
 O_D = [100000000]
 
@@ -1056,8 +1057,7 @@ def do_simulation(cx, cy, cyaw, cyawt, ck, sp, dl, initial_state):
     start = time.time()
 
     while MAX_TIME >= Time:
-        xref, target_ind = calc_ref_trajectory(
-            state, cx, cy, cyaw, cyawt, ck, sp, dl, target_ind)
+        xref, target_ind = calc_ref_trajectory(state, cx, cy, cyaw, cyawt, ck, sp, dl, target_ind)
         # print(target_ind)
         # target_ind += 1
 
@@ -1316,8 +1316,9 @@ def main():
     # cyawt = [abs(i) for i in cyawt]
     # cx, cy, cyawt, ck = get_switch_back_course(dl)
     # cx, cy, cyawt, ck = get_circle_course_forward(CIR_RAD)
-    cx, cy, cyawt, ck = get_circle_course_backward(CIR_RAD)
+    # cx, cy, cyawt, ck = get_circle_course_backward(CIR_RAD)
     # cx, cy, cyawt, ck = get_reverse_parking_course(dl)
+    cx, cy, cyawt, ck = line_cross_2_obstacle()
     # print(cyawt)
 
     sp = calc_speed_profile(cx, cy, cyawt, TARGET_SPEED)

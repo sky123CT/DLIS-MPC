@@ -2,7 +2,6 @@ import numpy as np
 import math
 from casadi import *
 
-
 def casadi_distance(point1_sym, point2_sym):
     if point1_sym.shape[0] != point2_sym.shape[0]:
         raise ValueError("two points must have the same dimension!")
