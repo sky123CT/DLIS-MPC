@@ -34,5 +34,8 @@ for setting up `Constrains`, go to ```mpc/functional/```and find the proper docu
 the cost function<br>
 for setting up `DLIS_Model`, go to ```mpc/functional/```and find the document with `CasadiDLIS.py` for
 the Model you want to use, remember to change the model location and name<br>
+
+Simulation
+----
 for starting simulation, go to main directory `mpc-dlis/` and select the proper document for your experiment 
 with `mpc_dlis_XXXX.py`
